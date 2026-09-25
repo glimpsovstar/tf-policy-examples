@@ -8,9 +8,13 @@
 # for loop. Here the inline-block case is a separate policy targeting
 # aws_security_group, because tfpolicy dispatches per resource type.
 
-input "forbidden_cidr" {
-  type    = string
-  default = "0.0.0.0/0"
+policy {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0, < 7.0.0"
+    }
+  }
 }
 
 resource_policy "aws_security_group_rule" "no_open_ingress_cidr" {

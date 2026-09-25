@@ -14,16 +14,22 @@ for the Home Affairs demo's policy-as-code story.
 
 ## Next
 
-- **Validate.** Nothing here has been run.
 - Decide enforcement level: advisory reports, mandatory gates the run.
-- Wire into the demo workspaces once validated.
+- Wire into the demo workspaces.
 
 ## Key context
 
-- **Unvalidated.** The `tfpolicy` CLI is not installed and is not obtainable from
-  `CloudbrokerAz/terraform-policy-core` (404 - private or renamed). Terraform 1.14.4 has no
-  `--policies` flag either. Written to the spec in the `tf-policy` skill of
-  `terraform-agentic-workflows`, but unexecuted.
+- **Validated with tfpolicy 0.3.0**, from https://releases.hashicorp.com/tfpolicy/ (not from
+  the repo named in the skill, which 404s). `validate` and `test` both exit 0. CI installs
+  the same version and runs both on every push.
+- Three errors only the real binary surfaced:
+  1. `input` blocks are **global to the policy directory**, so duplicates across files fail.
+     Shared inputs live in `_inputs.policy.hcl`.
+  2. Every file with resource or provider policies needs its own `policy` block containing
+     `required_providers` — nested in `policy`, **not** in `terraform_config`, which was the
+     wrong guess. Without it: "No provider schema is available for resource type ...".
+  3. Provider versions should bound both ends. Policies pin the schema they are checked
+     against — the opposite of the module guidance, where `>=` maximises compatibility.
 - Language rules that shaped the code: every built-in needs the `core::` prefix; optional
   attributes must be wrapped in `core::try` or evaluation errors occur that
   `expect_failure` does **not** cleanly catch; conditions must be single-line; blocks are

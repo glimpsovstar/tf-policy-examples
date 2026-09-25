@@ -7,17 +7,17 @@
 # a rule exposes SSH when its port range spans 22, which covers every case the
 # original enumerated. core::try handles the nulls.
 
-input "forbidden_cidr" {
-  type    = string
-  default = "0.0.0.0/0"
-}
-
-input "ssh_port" {
-  type    = number
-  default = 22
-}
-
 # Legacy standalone rule resource.
+
+policy {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0, < 7.0.0"
+    }
+  }
+}
+
 resource_policy "aws_security_group_rule" "no_ssh_from_world" {
   enforcement_level = "advisory"
 

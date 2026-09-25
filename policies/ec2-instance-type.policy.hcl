@@ -4,9 +4,13 @@
 # original read tfstate; tfpolicy evaluates planned attributes, so this catches
 # the violation before it is applied rather than after.
 
-input "allowed_instance_types" {
-  type    = list(string)
-  default = ["t3.micro", "t3.small", "t3.medium"]
+policy {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0, < 7.0.0"
+    }
+  }
 }
 
 resource_policy "aws_instance" "allowed_instance_type" {

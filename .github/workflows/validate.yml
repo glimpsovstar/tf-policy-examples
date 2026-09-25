@@ -5,28 +5,31 @@ on:
   push:
     branches: [main]
 
-# The tfpolicy CLI is not yet publicly distributed. Once it is, drop the
-# install step in and this runs on every PR.
+env:
+  TFPOLICY_VERSION: "0.3.0"
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check tfpolicy is available
-        id: check
+      # tfpolicy is not on any package manager yet, so pull the release
+      # archive directly. It ships under an evaluation licence - see EULA.txt
+      # in the archive.
+      - name: Install tfpolicy
         run: |
-          if command -v tfpolicy >/dev/null 2>&1; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::tfpolicy CLI not available; policies are unvalidated"
-          fi
+          curl -sSLo tfpolicy.zip \
+            "https://releases.hashicorp.com/tfpolicy/${TFPOLICY_VERSION}/tfpolicy_${TFPOLICY_VERSION}_linux_amd64.zip"
+          unzip -q tfpolicy.zip tfpolicy
+          chmod +x tfpolicy
+          sudo mv tfpolicy /usr/local/bin/
+          tfpolicy --version
 
+      # Downloads the AWS provider schema and checks every policy against it,
+      # so a typo'd attribute name fails here rather than in a real run.
       - name: Validate
-        if: steps.check.outputs.available == 'true'
         run: tfpolicy validate --policies=./policies
 
       - name: Test
-        if: steps.check.outputs.available == 'true'
         run: tfpolicy test --policies=./policies --tests=./tests

@@ -6,9 +6,13 @@
 # blocks, so a resource missing the tag and a resource with a bad value give
 # different, actionable messages.
 
-input "allowed_environments" {
-  type    = list(string)
-  default = ["Dev", "Test", "Prod"]
+policy {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 6.0.0, < 7.0.0"
+    }
+  }
 }
 
 resource_policy "aws_instance" "environment_tag" {

@@ -4,10 +4,9 @@ AWS guardrails written in **Terraform Policy (tfpolicy)** — the native `.polic
 converted from the Sentinel policies in
 [`glimpsovstar/terraform-sentinel-policies/aws_demo`](https://github.com/glimpsovstar/terraform-sentinel-policies/tree/main/aws_demo).
 
-> ⚠️ **Not yet validated.** The `tfpolicy` CLI was not available on the machine these were
-> written on, and Terraform 1.14.4 has no `--policies` flag. They are written to the language
-> spec and ship with tests, but **nothing here has been executed**. Run `tfpolicy validate`
-> and `tfpolicy test` before relying on them. See [Validating](#validating).
+✅ **Validated and tested** with `tfpolicy` 0.3.0. `tfpolicy validate` fetches the AWS
+provider schema and checks every policy against it; `tfpolicy test` runs the mocks in
+`tests/`. Both pass, and CI enforces them on every push.
 
 ## What was converted
 
@@ -58,6 +57,9 @@ and watch the run fail on policy rather than on a human noticing in review.
 
 ## Validating
 
+Install the CLI from [releases.hashicorp.com/tfpolicy](https://releases.hashicorp.com/tfpolicy/),
+then:
+
 ```bash
 tfpolicy validate --policies=./policies
 tfpolicy test     --policies=./policies --tests=./tests
@@ -65,6 +67,20 @@ tfpolicy test     --policies=./policies --tests=./tests
 
 Trust the exit code, not the trailing "Success!" line — it can print even when individual
 diagnostics raised exit 1.
+
+### Three things validation caught
+
+Worth recording, because none are obvious from the language reference:
+
+1. **`input` blocks are global to the policy directory**, not scoped per file. Declaring
+   `forbidden_cidr` in two policies is a "Duplicate input block" error — hence
+   `_inputs.policy.hcl`.
+2. **Every file containing resource or provider policies needs its own `policy` block with
+   `required_providers`.** Without it: *"No provider schema is available for resource type
+   aws_instance."* It is a nested block of `policy`, not of `terraform_config`.
+3. **Provider versions want both bounds.** `>= 5.0` warns; `>= 6.0.0, < 7.0.0` is clean.
+   Policies pin the schema they are checked against, which is the opposite of the advice for
+   modules, where `>=` maximises consumer compatibility.
 
 ## Layout
 
