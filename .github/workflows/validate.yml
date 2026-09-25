@@ -1,0 +1,32 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The tfpolicy CLI is not yet publicly distributed. Once it is, drop the
+# install step in and this runs on every PR.
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tfpolicy is available
+        id: check
+        run: |
+          if command -v tfpolicy >/dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::tfpolicy CLI not available; policies are unvalidated"
+          fi
+
+      - name: Validate
+        if: steps.check.outputs.available == 'true'
+        run: tfpolicy validate --policies=./policies
+
+      - name: Test
+        if: steps.check.outputs.available == 'true'
+        run: tfpolicy test --policies=./policies --tests=./tests
